@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cppdbg",
+            "name": "My Debug Configuration",
+            "request": "launch",
+            "program": "${workspaceFolder}/release/MyProject.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "preLaunchTask": "build",
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true
+        }
+    ]
+}
