@@ -195,9 +195,9 @@ private:
     std::list<Node>::iterator current;
     bool raceFlag = false;
     bool m_running = true;
-    bool recMode = false;
+    bool recMode = true;
 
-    bool playMode = true;
+    bool playMode = false;
     float playTimer = 0;
     const char* playFile = "test.bin";
 
