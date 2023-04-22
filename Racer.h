@@ -104,11 +104,17 @@ public:
     BYTE* getPlayerBlock() { return mem.readMemory(PBSIZE, 0xA29C44, true, exe); }
     BYTE* getCameraBlock() { return mem.readMemory(CBSIZE, 0xA9ADAC, true, exe); }
     bool setPlayerBlock(const unsigned char* data) { return mem.writeMemory(data,PBSIZE,0xA29C44,true,exe); }
+    bool setCameraBlock(const unsigned char* data) { return mem.writeMemory(data,CBSIZE,0xA9ADAC,true,exe); }
 
     bool isConnected() { return mem.isValid(); }
     
-    bool getMode() { return recMode; }
-    void setMode(bool isRecording) { recMode = isRecording; playMode = !isRecording; }
+    bool getraceFlag() { return raceFlag; }
+    bool getrecMode() { return recMode; }
+    bool getplayMode() { return playMode; }
+    void setMode(bool r, bool p) { 
+        recMode = r; playMode = p;
+        printf("Mode set to: %s \n", r ? "Recording" : (p ? "Playback" : "Standby"));
+    }
 
 
 protected:
@@ -155,22 +161,29 @@ protected:
                     play.readFile(playFile);
                     current = play.getFront();
                     playTimer = 0;
+                    raceFlag = true;
                     updateUI("mode");
                 }
 
                 float timer = getTimer();
 
-                while(timer > current->timer) {
-                    current++;
-                }
+                // while (timer > current->timer) {
+                //     current++;
+                // }
 
-                if(timer > playTimer) {
+                while(current->timer < timer) {
                     setPlayerBlock(current->playerBlock);
-                    playTimer = timer;
+                    setCameraBlock(current->cameraBlock);
+                    current++;
                     // updateUI("nextFrame");
                 }
-
                 
+            }
+            else {
+                if(!raceFlag) {
+                    raceFlag = true;
+                    updateUI("mode");
+                }
             }
             
         }
@@ -186,6 +199,9 @@ protected:
         }
     }
     
+    bool recMode = false;
+    bool playMode = false;
+    
 private:
     const char* exe = "SWEP1RCR.EXE";
     Memory mem = Memory("Episode I Racer");
@@ -195,9 +211,7 @@ private:
     std::list<Node>::iterator current;
     bool raceFlag = false;
     bool m_running = true;
-    bool recMode = true;
-
-    bool playMode = false;
+    
     float playTimer = 0;
     const char* playFile = "test.bin";
 
