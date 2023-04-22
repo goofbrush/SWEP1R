@@ -34,13 +34,14 @@ namespace Values {
 }
 
 
-class Worker : public QThread, Racer  {
+class Worker : public QThread, public Racer  {
     Q_OBJECT
 public:
     Worker(QObject *parent = nullptr) : QThread(parent) {}
 
 signals:
     void workCompleted(int count);
+    void newRace(bool f, bool r, bool p);
     void newFrame(const char* track, const char* pod, float timer, int nodes, int nodeCount = -1);
     void updateConnectionStatus(bool isConnected);
 
@@ -61,7 +62,7 @@ private:
             emit updateConnectionStatus(isConnected());
         }
         else if (!strcmp(flag, "mode")) {
-            // emit updateConnectionStatus(isConnected());
+            emit newRace(getraceFlag(), getrecMode(), getplayMode());
         }
         
     }
@@ -75,6 +76,7 @@ class mainWindow : public QMainWindow {
 
 public:
     mainWindow(QWidget *parent = nullptr) : QMainWindow(parent) {
+        connect(&gameThread, &Worker::newRace, this, &mainWindow::handleNewRace);
         connect(&gameThread, &Worker::newFrame, this, &mainWindow::handleNewFrame);
         connect(&gameThread, &Worker::updateConnectionStatus, this, &mainWindow::handleConnectionStatus);
         
@@ -82,7 +84,22 @@ public:
         ui->setupUi(this);
 
         connect(ui->pushButton_6, &QPushButton::clicked, this, &mainWindow::toggleConsole);
-        // connect(ui->checkBox, &QCheckBox::clicked, this, &Worker::setMode);
+        
+        
+
+
+        connect(ui->checkBox, &QCheckBox::clicked, this, [=]() { 
+            if (ui->checkBox_2->isChecked()) {
+                ui->checkBox_2->setChecked(false);
+            }
+            gameThread.setMode(ui->checkBox->isChecked(),ui->checkBox_2->isChecked());
+        });
+        connect(ui->checkBox_2, &QCheckBox::clicked, this, [=]() {
+            if (ui->checkBox->isChecked()) {
+                ui->checkBox->setChecked(false);
+            }
+            gameThread.setMode(ui->checkBox->isChecked(),ui->checkBox_2->isChecked());
+        });
     }
 
     void start() {
@@ -96,6 +113,16 @@ public:
     }
 
 public slots:
+
+    void handleNewRace(bool f, bool r, bool p) {
+        ui->checkBox->setEnabled(!f);
+        ui->checkBox_2->setEnabled(!f);
+
+        ui->label_7->setText(
+            !f ? "Standby" : r ? "Recording" : (p? "Playback" : "Standby")
+        );
+    }
+
     void handleNewFrame(const char* track, const char* pod, float timer, int nodes, int nodeCount = -1) {
         ui->label->setText(QString("Track\n") + QString(track));
         ui->label_2->setText(QString("Pod\n") + QString(pod));
@@ -127,6 +154,8 @@ public slots:
         ui->label_5->setPalette(palette); ui->label_5->update();
     }
 
+    
+
 private:
     Ui::mainWindow *ui;
     Worker gameThread;
@@ -152,4 +181,6 @@ private:
         }
     }
 };
+
+
 
